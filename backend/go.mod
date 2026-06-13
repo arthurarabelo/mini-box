@@ -1,0 +1,3 @@
+module minibox/backend
+
+go 1.22.5
