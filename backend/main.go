@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"minibox/backend/auth"
+	"minibox/backend/files"
+	"minibox/backend/graph"
+	"minibox/backend/middleware"
 	"net/http"
 )
 
@@ -16,10 +20,20 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-	})
+	// --- Rotas públicas (sem autenticação) ---
+	mux.HandleFunc("POST /api/auth/login", auth.LoginHandler)
 
-	fmt.Println("Backend rodando")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	// --- Rotas protegidas (requerem JWT) ---
+	// auth.RequireAuth é o middleware — envolve o handler como HOF
+	mux.HandleFunc("GET /api/graph/v1.0/me", auth.RequireAuth(graph.MeHandler))
+
+	mux.HandleFunc("GET /api/files", auth.RequireAuth(files.ListHandler))
+	mux.HandleFunc("POST /api/files/upload", auth.RequireAuth(files.UploadHandler))
+	mux.HandleFunc("GET /api/files/download", auth.RequireAuth(files.DownloadHandler))
+
+	// Aplica o middleware CORS em TODAS as rotas
+	handler := middleware.CORS(mux)
+
+	fmt.Println("Backend rodando em http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
