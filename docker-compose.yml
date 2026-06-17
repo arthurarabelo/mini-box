@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: minibox-postgres
+    environment:
+      POSTGRES_USER: minibox
+      POSTGRES_PASSWORD: minibox
+      POSTGRES_DB: minibox
+    ports:
+      - "5432:5432"
+    volumes:
+      - minibox-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  minibox-postgres-data:

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"minibox/backend/auth"
+	"minibox/backend/db"
 	"minibox/backend/files"
 	"minibox/backend/graph"
 	"minibox/backend/middleware"
@@ -18,10 +20,16 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func main() {
+	if err := db.Connect(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+	defer db.Pool.Close()
+
 	mux := http.NewServeMux()
 
 	// --- Rotas públicas (sem autenticação) ---
 	mux.HandleFunc("POST /api/auth/login", auth.LoginHandler)
+	mux.HandleFunc("POST /api/auth/register", auth.RegisterHandler)
 
 	// --- Rotas protegidas (requerem JWT) ---
 	// auth.RequireAuth é o middleware — envolve o handler como HOF

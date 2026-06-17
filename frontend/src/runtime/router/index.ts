@@ -1,7 +1,7 @@
 import { createRouter as createVueRouter, createWebHistory } from 'vue-router'
 import LoginPage from '../pages/LoginPage.vue'
 import AccessDenied from '../pages/AccessDenied.vue'
-// import AppLayout from '../../AppLayout.vue'
+import AppLayout from '../../AppLayout.vue'
 
 export function createAppRouter() {
   return createVueRouter({
@@ -19,13 +19,13 @@ export function createAppRouter() {
         component: AccessDenied,
         meta: { authContext: 'anonymous' },
       },
-      // {
-      //   path: '/',
-      //   name: 'layout',
-      //   component: AppLayout,
-      //   redirect: '/files',
-      //   children: [],
-      // },
+      {
+        path: '/',
+        name: 'layout',
+        component: AppLayout,
+        redirect: '/files',
+        children: [],
+      },
     ],
   })
 }

@@ -5,22 +5,15 @@ import (
 	"net/http"
 	"time"
 
+	"minibox/backend/db"
+
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // jwtSecret é a chave para assinar os tokens
 // No CERNBox, essa chave é configurada via variável de ambiente
 var jwtSecret = []byte("minibox-dev-secret-nao-use-em-producao")
-
-// Usuários hardcoded — no CERNBox vêm do LDAP/Keycloak
-var users = map[string]struct {
-	Password string
-	Name     string
-	Email    string
-}{
-	"admin": {Password: "admin", Name: "Admin", Email: "admin@cern.ch"},
-	"alice": {Password: "alice123", Name: "Alice Smith", Email: "alice@cern.ch"},
-}
 
 // LoginRequest representa o corpo do POST /api/auth/login
 // A tag `json:"username"` define o nome no JSON — como Zod no TypeScript
@@ -91,15 +84,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// verifica credenciais
-	user, exists := users[req.Username]
-	if !exists || user.Password != req.Password {
+	// busca o usuário no banco
+	user, err := db.GetUserByUsername(r.Context(), req.Username)
+	if err != nil {
+		http.Error(w, "Credenciais inválidas", http.StatusUnauthorized)
+		return
+	}
+
+	// compara a senha enviada com o hash armazenado
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		http.Error(w, "Credenciais inválidas", http.StatusUnauthorized)
 		return
 	}
 
 	// gera o token
-	token, err := GenerateToken(req.Username, user.Name, user.Email)
+	token, err := GenerateToken(user.Username, user.Name, user.Email)
 	if err != nil {
 		http.Error(w, "Erro interno", http.StatusInternalServerError)
 		return
@@ -111,4 +110,36 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Name:  user.Name,
 		Email: user.Email,
 	})
+}
+
+// RegisterRequest representa o corpo do POST /api/auth/register.
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+}
+
+// RegisterHandler processa POST /api/auth/register.
+//
+// EXERCÍCIO — implemente o cadastro de usuários. Roteiro:
+//  1. Decodifique o JSON do corpo (RegisterRequest) — igual ao LoginHandler.
+//  2. Valide os campos (username/password/name/email não vazios, senha
+//     com tamanho mínimo razoável).
+//  3. Gere o hash da senha com bcrypt.GenerateFromPassword(
+//     []byte(req.Password), bcrypt.DefaultCost).
+//  4. Chame db.CreateUser(r.Context(), username, hash, name, email) —
+//     já implementado em backend/db/users.go.
+//  5. Se o erro for db.ErrUserExists, responda http.StatusConflict (409).
+//     Para outros erros, http.StatusInternalServerError.
+//  6. Em caso de sucesso, gere um token com GenerateToken (igual ao
+//     LoginHandler) e responda com LoginResponse e status 201 Created.
+//
+// Depois de implementar, teste com:
+//
+//	curl -X POST http://localhost:8080/api/auth/register \
+//	  -H "Content-Type: application/json" \
+//	  -d '{"username":"bob","password":"bobsenha","name":"Bob","email":"bob@cern.ch"}'
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "cadastro não implementado — exercício", http.StatusNotImplemented)
 }
