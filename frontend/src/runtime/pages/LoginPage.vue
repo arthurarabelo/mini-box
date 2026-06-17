@@ -43,7 +43,7 @@ async function handleLogin() {
 
         const redirectUrl = (route.query.redirectUrl as string) || '/files'
         router.push(redirectUrl)
-    } catch {
+    } catch (e) {
         error.value = 'Usuário ou senha incorretos'
     } finally {
         loading.value = false

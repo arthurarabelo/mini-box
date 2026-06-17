@@ -95,6 +95,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	user, exists := users[req.Username]
 	if !exists || user.Password != req.Password {
 		http.Error(w, "Credenciais inválidas", http.StatusUnauthorized)
+		return
 	}
 
 	// gera o token
