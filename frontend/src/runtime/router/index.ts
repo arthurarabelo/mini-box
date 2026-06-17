@@ -1,6 +1,6 @@
 import { createRouter as createVueRouter, createWebHistory } from 'vue-router'
 import LoginPage from '../pages/LoginPage.vue'
-// import AccessDenied from '../pages/AccessDenied.vue'
+import AccessDenied from '../pages/AccessDenied.vue'
 // import AppLayout from '../../AppLayout.vue'
 
 export function createAppRouter() {
@@ -13,12 +13,12 @@ export function createAppRouter() {
         component: LoginPage,
         meta: { authContext: 'anonymous' },
       },
-      // {
-      //   path: '/access-denied',
-      //   name: 'accessDenied',
-      //   component: AccessDenied,
-      //   meta: { authContext: 'anonymous' },
-      // },
+      {
+        path: '/access-denied',
+        name: 'accessDenied',
+        component: AccessDenied,
+        meta: { authContext: 'anonymous' },
+      },
       // {
       //   path: '/',
       //   name: 'layout',
