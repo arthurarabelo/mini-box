@@ -2,10 +2,9 @@ package auth
 
 import (
 	"encoding/json"
+	"minibox/backend/db"
 	"net/http"
 	"time"
-
-	"minibox/backend/db"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -27,6 +26,14 @@ type LoginResponse struct {
 	Token string `json:"token"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+
+// RegisterRequest representa o corpo do POST /api/auth/register
+type RegisterRequest struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
 }
 
 // Claims são os dados embutidos no JWT
@@ -112,14 +119,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// RegisterRequest representa o corpo do POST /api/auth/register.
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-}
-
 // RegisterHandler processa POST /api/auth/register.
 //
 // EXERCÍCIO — implemente o cadastro de usuários. Roteiro:
@@ -141,5 +140,67 @@ type RegisterRequest struct {
 //	  -H "Content-Type: application/json" \
 //	  -d '{"username":"bob","password":"bobsenha","name":"Bob","email":"bob@cern.ch"}'
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "cadastro não implementado — exercício", http.StatusNotImplemented)
+	var req RegisterRequest
+
+	// decodifica o JSON do corpo da requisição e escreve em req
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "JSON inválido", http.StatusBadRequest)
+		return
+	}
+
+	fields := []struct {
+		name  string
+		value string
+	}{
+		{"Nome", req.Name},
+		{"Usuário", req.Username},
+		{"Email", req.Email},
+		{"Senha", req.Password},
+	}
+
+	// valida os campos da requisição
+	for _, field := range fields {
+		if field.value == "" {
+			http.Error(w, field.name+" está vazio.", http.StatusUnprocessableEntity)
+			return
+		}
+	}
+
+	if len(req.Password) < 8 {
+		http.Error(w, "Senha deve ter ao menos 8 caracteres", http.StatusUnprocessableEntity)
+		return
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Erro interno", http.StatusInternalServerError)
+		return
+	}
+
+	// cria o usuário no banco
+	user, err := db.CreateUser(r.Context(), req.Username, string(passwordHash), req.Name, req.Email)
+	if err == db.ErrUserExists {
+		http.Error(w, "Usuário já está cadastrado", http.StatusConflict)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "Erro interno", http.StatusInternalServerError)
+		return
+	}
+
+	// gera o token
+	token, err := GenerateToken(user.Username, user.Name, user.Email)
+	if err != nil {
+		http.Error(w, "Erro interno", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(LoginResponse{
+		Token: token,
+		Name:  user.Name,
+		Email: user.Email,
+	})
 }
