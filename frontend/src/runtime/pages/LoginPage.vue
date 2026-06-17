@@ -2,22 +2,22 @@
     <div class="login-wrapper">
         <div class="login-card">
             <h1>📦 Mini Box</h1>
+            <p class="subtitle">Entre com suas credenciais</p>
+            <form @submit.prevent="handleLogin">
+                <label>
+                    Usuário
+                    <input v-model="username" type="text" placeholder="admin" autofocus />
+                </label>
+                <label>
+                    Senha
+                    <input v-model="password" type="password" placeholder="admin" />
+                </label>
+                <p v-if="error" class="error-msg">{{ error }}</p>
+                <button type="submit" :disabled="loading">
+                    {{ loading ? 'Entrando...' : 'Entrar' }}
+                </button>
+            </form>
         </div>
-        <p class="subtitle">Entre com suas credenciais</p>
-        <form @submit.prevent="handleLogin">
-            <label>
-                Usuário
-                <input v-model="username" type="text" placeholder="admin" autofocus />
-            </label>
-            <label>
-                Senha
-                <input v-model="password" type="password" placeholder="admin" />
-            </label>
-            <p v-if="error" class="error-msg">{{ error }}</p>
-            <button type="submit" :disabled="loading">
-                {{ loading ? 'Entrando...' : 'Entrar' }}
-            </button>
-        </form>
     </div>
 </template>
 
