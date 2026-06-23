@@ -2,6 +2,7 @@ import { createRouter as createVueRouter, createWebHistory } from 'vue-router'
 import LoginPage from '../pages/LoginPage.vue'
 import AccessDenied from '../pages/AccessDenied.vue'
 import AppLayout from '../../AppLayout.vue'
+import Register from '../pages/Register.vue'
 
 export function createAppRouter() {
   return createVueRouter({
@@ -11,6 +12,12 @@ export function createAppRouter() {
         path: '/login',
         name: 'login',
         component: LoginPage,
+        meta: { authContext: 'anonymous' },
+      },
+      {
+        path: '/register',
+        name: 'register',
+        component: Register,
         meta: { authContext: 'anonymous' },
       },
       {

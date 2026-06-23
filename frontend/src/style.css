@@ -58,6 +58,8 @@ body { background: var(--color-bg); color: var(--color-text); }
   cursor: pointer; margin-top: 4px; }
 .login-card button:disabled { opacity: 0.6; cursor: not-allowed; }
 .error-msg { color: #cf222e; font-size: 0.85rem; }
+.register-link { color: blue; font-size: 0.85rem; text-align: center; }
+.login-link { color: blue; font-size: 0.85rem; text-align: center; }
 .hint { margin-top: 20px; font-size: 0.8rem; color: var(--color-muted); }
 
 .files-page { max-width: 900px; }

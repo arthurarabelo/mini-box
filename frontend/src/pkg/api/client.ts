@@ -26,7 +26,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    let message = `HTTP ${res.status}`;
+    try {
+      const json = JSON.parse(text);
+      message = json.error || json.message || message;
+    } catch {
+      if (text) message = text;
+    }
+    throw new Error(message);
   }
 
   const text = await res.text();
@@ -36,12 +44,23 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 // API de autenticação
 export const authApi = {
   login: (username: string, password: string) =>
-    request<{ token: string; name: string; email: string }>('/auth/login', {
-      method: 'POST',
+    request<{ token: string; name: string; email: string }>("/auth/login", {
+      method: "POST",
       body: JSON.stringify({ username, password }),
     }),
-}
 
+  register: (name: string, username: string, email: string, password: string) =>
+    request<{
+      token: string;
+      name: string;
+      email: string;
+      username: string;
+      password: string;
+    }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ name, username, email, password }),
+    }),
+};
 
 export const graphApi = {
   me: () =>
@@ -55,11 +74,11 @@ export const graphApi = {
 
 // API de arquivos
 export interface FileItem {
-  name: string
-  type: 'file' | 'folder'
-  size?: number
-  modified: string
-  mimeType?: string
+  name: string;
+  type: "file" | "folder";
+  size?: number;
+  modified: string;
+  mimeType?: string;
 }
 
 export const filesApi = {
@@ -67,17 +86,17 @@ export const filesApi = {
     request<FileItem[]>(`/files?path=${encodeURIComponent(path)}`),
 
   upload: (path: string, file: File) => {
-    const form = new FormData()
-    form.append('file', file)
+    const form = new FormData();
+    form.append("file", file);
     // Para upload não usamos o wrapper (precisa remover Content-Type para multipart)
-    const authStore = useAuthStore()
+    const authStore = useAuthStore();
     return fetch(`${BASE_URL}/files/upload?path=${encodeURIComponent(path)}`, {
-      method: 'POST',
+      method: "POST",
       headers: { Authorization: `Bearer ${authStore.accessToken}` },
       body: form,
-    })
+    });
   },
 
   downloadUrl: (path: string) =>
     `${BASE_URL}/files/download?path=${encodeURIComponent(path)}`,
-}
+};

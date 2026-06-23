@@ -16,6 +16,9 @@
                 <button type="submit" :disabled="loading">
                     {{ loading ? 'Entrando...' : 'Entrar' }}
                 </button>
+                <p class="register-link">
+                    <RouterLink to="/register">Cadastre-se aqui</RouterLink> 
+                </p>
             </form>
         </div>
     </div>
